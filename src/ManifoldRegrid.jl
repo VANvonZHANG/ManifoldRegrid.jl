@@ -9,9 +9,9 @@ using SparseArrays
 using StaticArrays
 
 export AbstractRemapScheme, Conservative, Bilinear
-# Task 7 appends `ConservativeWeights, conservative_weights`; Task 8 appends
-# `remap`. Export only what exists: Aqua's test_undefined_exports fails the
-# scaffold otherwise.
+export ConservativeWeights, conservative_weights
+# Task 8 appends `remap`. Export only what exists: Aqua's
+# test_undefined_exports fails the scaffold otherwise.
 
 """
     AbstractRemapScheme
@@ -38,5 +38,7 @@ Nodal bilinear remapping: destination node values are bilinear interpolations
 of the source nodal field.
 """
 struct Bilinear <: AbstractRemapScheme end
+
+include("weights.jl")
 
 end # module

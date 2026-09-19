@@ -11,3 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Package skeleton with the `AbstractRemapScheme` / `Conservative` / `Bilinear`
   scheme tags.
+- `conservative_weights` / `ConservativeWeights`: first-order overlap-area
+  weights from spherical Sutherland–Hodgman clipping, with k-d tree candidate
+  search and construction-time conservation invariants.

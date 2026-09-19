@@ -9,4 +9,5 @@ end
 @testset "ManifoldRegrid.jl" begin
     include("helpers.jl")
     include("test_schemes.jl")
+    include("test_weights.jl")
 end
