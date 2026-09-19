@@ -26,9 +26,46 @@ using Test
         ConservativeWeights(sparse([1], [1], [1.0], size(w.W)...), w.src, w.dest,
         w.dst_areas)
     )
-    # clipping noise must not leak in as microscopic weights; measured slivers
-    # are ~1.95e-3, and nothing legitimately lands in the 1e-18..1e-6 band
-    @test minimum(nonzeros(w.W)) > 1e-6
+    # Clipping noise must not leak in as microscopic weights: every stored entry
+    # is a real geometric sliver, so the bar is strictly positive rather than a
+    # magnitude threshold. Sliver scale is a property of the fixture, not of the
+    # code: the smallest one here is ~1.95e-3, and a finer destination — LatLon
+    # -> CubedSphereGrid(n = 8) — drops it to ~3.06e-5. A threshold like 1e-6
+    # would be a fixture-scale accident waiting to trip on a legitimate sliver.
+    @test minimum(nonzeros(w.W)) > 0.0
+end
+
+# The suite's only non-LatLon fixtures are the octahedron (unstructured); the
+# parametric grids other than LatLon are otherwise never a remapping partner.
+# Pin the "works for every grid type" claim for them, in both roles.
+@testset "CubedSphere and ReducedGaussian as source and destination" begin
+    for g in (CubedSphereGrid(n = 4), ReducedGaussianGrid(nlat = 6))
+        for (src, dst) in ((g, coarse_grid()), (coarse_grid(), g), (g, g))
+            w = conservative_weights(src, dst)
+            rowsums = vec(sum(w.W; dims = 2))
+            colsums = vec(sum(w.W; dims = 1))
+            @test rowsums ≈ [cell_volume(dst, d) for d in 1:num_cells(dst)] rtol = 1e-8
+            @test colsums ≈ [cell_volume(src, s) for s in 1:num_cells(src)] rtol = 1e-8
+        end
+    end
+end
+
+# Clipping — unlike the area formulas — depends on the ring orientation, so the
+# counter-clockwise guarantee gets checked directly: the cell centroid must be
+# inside every edge of its own ring.
+@testset "cell rings are counter-clockwise ($(nameof(typeof(g))))" for g in (
+    CubedSphereGrid(n = 4), ReducedGaussianGrid(nlat = 6))
+    for c in 1:num_cells(g)
+        ring = cell_ring(g, c)
+        centroid = normalize(cell_centroid(g, c))
+        inside = true
+        for i in eachindex(ring)
+            a = ring[i]
+            b = ring[mod1(i + 1, length(ring))]
+            inside &= side_of_geodesic(centroid, a, b) >= 0
+        end
+        @test inside
+    end
 end
 
 @testset "same-mesh weights are diagonal" begin
