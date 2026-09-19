@@ -29,13 +29,25 @@ jobs:
         with:
           version: ${{ matrix.version }}
       - uses: julia-actions/cache@v3
+      # The siblings are not registered yet, so they are developed from GitHub.
+      # The revisions are pinned deliberately: this package needs the spherical
+      # polygon geometry layer (ManifoldMeshes) and `location_axis` /
+      # `interpolate(f, dest_mesh)` (ManifoldFields), which live on the feature
+      # branches below rather than on `main`. Pinning keeps CI deterministic and
+      # records the exact sibling generation this package was tested against.
+      #
+      # TODO: once the sibling pull requests merge, repoint these to the merge
+      # commits on `main`, and to the released versions after 0.8.0 / 0.1.1 are
+      # tagged (see ROADMAP.md, "Release prerequisites").
       - name: Develop sibling packages (not registered yet)
         run: |
           julia --project=. -e '
             using Pkg
             Pkg.develop([
-              PackageSpec(url = "https://github.com/VANvonZHANG/ManifoldMeshes.jl"),
-              PackageSpec(url = "https://github.com/VANvonZHANG/ManifoldFields.jl"),
+              PackageSpec(url = "https://github.com/VANvonZHANG/ManifoldMeshes.jl",
+                          rev = "fd1321c"),
+              PackageSpec(url = "https://github.com/VANvonZHANG/ManifoldFields.jl",
+                          rev = "62efcf8"),
             ])
           '
       - uses: julia-actions/julia-buildpkg@v1

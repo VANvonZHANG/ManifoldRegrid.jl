@@ -19,10 +19,12 @@ and it calls `ManifoldFields.location_axis`. Until then, `Pkg.develop` on the
 sibling paths (or a `rev`-pinned clone) is required.
 
 Accordingly, `.github/workflows/CI.yml`'s "Develop sibling packages" step
-tracks each sibling's **default-branch HEAD**, so it cannot go green from this
-branch alone: both sibling branches must be pushed and merged first. Once they
-are, pin the step to a `rev` (a tag or commit SHA) so CI is reproducible and
-does not silently pick up sibling changes.
+develops both siblings from GitHub at **pinned revisions** — the feature branch
+commits that carry the required API, not `main` — so CI is reproducible here and
+now, and records the exact sibling generation this package was tested against.
+Those pins are a temporary bridge: repoint them to the merge commits once the
+sibling pull requests land, and drop them in favour of the released versions
+once `0.8.0` / `0.1.1` are tagged.
 
 ## Delivered (2026-09)
 
