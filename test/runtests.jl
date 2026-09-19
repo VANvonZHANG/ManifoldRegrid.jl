@@ -10,4 +10,5 @@ end
     include("helpers.jl")
     include("test_schemes.jl")
     include("test_weights.jl")
+    include("test_remap.jl")
 end

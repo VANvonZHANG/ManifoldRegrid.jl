@@ -26,3 +26,10 @@ function fine_grid()
         lon_edges = collect(0.0:15.0:360.0)
     )
 end
+
+function small_other_grid()
+    LatLonGrid(
+        lat_edges = collect(-90.0:45.0:90.0),
+        lon_edges = collect(0.0:90.0:360.0)
+    )
+end

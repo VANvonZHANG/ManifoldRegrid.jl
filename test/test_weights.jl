@@ -19,6 +19,16 @@ using Test
     @test rowsums ≈ [cell_volume(dst, d) for d in 1:num_cells(dst)] rtol = 1e-8
     @test colsums ≈ [cell_volume(src, s) for s in 1:num_cells(src)] rtol = 1e-8
     @test sum(rowsums) ≈ 4π rtol = 1e-8
+
+    # the checker must actually throw: the spec calls loud failure the product's
+    # core promise, and nothing else exercises the throwing branch
+    @test_throws ErrorException ManifoldRegrid._check_conservation(
+        ConservativeWeights(sparse([1], [1], [1.0], size(w.W)...), w.src, w.dest,
+        w.dst_areas)
+    )
+    # clipping noise must not leak in as microscopic weights; measured slivers
+    # are ~1.95e-3, and nothing legitimately lands in the 1e-18..1e-6 band
+    @test minimum(nonzeros(w.W)) > 1e-6
 end
 
 @testset "same-mesh weights are diagonal" begin

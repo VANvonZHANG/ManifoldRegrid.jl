@@ -14,3 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `conservative_weights` / `ConservativeWeights`: first-order overlap-area
   weights from spherical Sutherland–Hodgman clipping, with k-d tree candidate
   search and construction-time conservation invariants.
+- `remap`: `remap(Conservative(), f, dest)`, `remap(Bilinear(), f, dest)`, and
+  `remap(w::ConservativeWeights, f)`. Scheme and field location are checked by
+  dispatch.

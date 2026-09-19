@@ -10,8 +10,7 @@ using StaticArrays
 
 export AbstractRemapScheme, Conservative, Bilinear
 export ConservativeWeights, conservative_weights
-# Task 8 appends `remap`. Export only what exists: Aqua's
-# test_undefined_exports fails the scaffold otherwise.
+export remap
 
 """
     AbstractRemapScheme
@@ -40,5 +39,6 @@ of the source nodal field.
 struct Bilinear <: AbstractRemapScheme end
 
 include("weights.jl")
+include("remap.jl")
 
 end # module
