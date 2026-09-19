@@ -29,25 +29,26 @@ jobs:
         with:
           version: ${{ matrix.version }}
       - uses: julia-actions/cache@v3
-      # The siblings are not registered yet, so they come from GitHub. The
-      # revisions are pinned to the commits on `main` that carry the API this
-      # package needs — the spherical polygon geometry layer (ManifoldMeshes
-      # 0.8.0) and `location_axis` / `interpolate(f, dest_mesh)`
-      # (ManifoldFields 0.1.1). Pinning keeps CI deterministic and records the
-      # exact sibling generation this package was tested against.
-      # `add` (not `develop`) is required: `develop` does not accept `rev`.
+      # ManifoldMeshes 0.8.0 is registered, so it resolves from the registry by
+      # name. ManifoldFields is not registered yet: it is added from GitHub at
+      # the pinned revision that carries `location_axis` / `interpolate(f,
+      # dest_mesh)`. `add` (not `develop`) is required for `rev`; `develop` does
+      # not accept it.
       #
-      # TODO: drop the pins and depend on the released versions once 0.8.0 and
-      # 0.1.1 are tagged (see ROADMAP.md, "Release prerequisites").
-      - name: Add sibling packages (not registered yet)
+      # TODO: once ManifoldFields 0.1.1 finishes its new-package waiting period
+      # and is registered, drop this step entirely — both siblings will then
+      # resolve from the registry (see ROADMAP.md, "Release prerequisites").
+      # Both siblings must be supplied in a single `Pkg.add` call: adding one
+      # alone triggers a resolve in which the other, already listed in [deps],
+      # has no source yet and is not registered.
+      - name: Add sibling packages (ManifoldFields not registered yet)
         run: |
           julia --project=. -e '
             using Pkg
             Pkg.add([
-              PackageSpec(url = "https://github.com/VANvonZHANG/ManifoldMeshes.jl",
-                          rev = "428fcfa"),
+              PackageSpec(name = "ManifoldMeshes"),
               PackageSpec(url = "https://github.com/VANvonZHANG/ManifoldFields.jl",
-                          rev = "4f49604"),
+                          rev = "ea614c8"),
             ])
           '
       - uses: julia-actions/julia-buildpkg@v1
