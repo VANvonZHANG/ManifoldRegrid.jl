@@ -80,6 +80,11 @@ function conservative_weights(src::AbstractManifoldMesh, dest::AbstractManifoldM
 
     src_centroids = all_cell_centroids(src)
     dst_centroids = all_cell_centroids(dest)
+    # all_cell_centroids returns UNIT vectors regardless of R (node coordinates
+    # are at radius R, centroids are not) — normalize so the tree and the query
+    # point live on the unit sphere and the radius is an angular chord.
+    src_centroids = [normalize(SVector{3, Float64}(c)) for c in src_centroids]
+    dst_centroids = [normalize(SVector{3, Float64}(c)) for c in dst_centroids]
     max_r_src = maximum(_cell_circumradius(src, c) for c in 1:nc_src)
     dst_r = [_cell_circumradius(dest, c) for c in 1:nc_dst]
     tree = KDTree(reduce(hcat, src_centroids))
@@ -90,7 +95,7 @@ function conservative_weights(src::AbstractManifoldMesh, dest::AbstractManifoldM
     for d in 1:nc_dst
         ring_d = cell_ring(dest, d)
         θ = min(dst_r[d] + max_r_src, π)
-        radius = 2R * sin(θ / 2)
+        radius = 2 * sin(θ / 2)   # unit-sphere chord; scale-free in R
         for s in inrange(tree, dst_centroids[d], radius)
             overlap = spherical_polygon_intersection(cell_ring(src, s), ring_d)
             area = spherical_polygon_area(overlap, R)

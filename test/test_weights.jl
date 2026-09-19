@@ -44,6 +44,29 @@ end
     @test vec(sum(w.W; dims = 2)) ≈ fill(π / 2, num_cells(oct)) rtol = 1e-8
 end
 
+@testset "non-unit radius (R != 1)" begin
+    # R != 1 is the discriminating choice: the candidate-search radius used to
+    # be `2R * sin(θ / 2)`, which is the unit-sphere chord only when R == 1.
+    R = 0.5
+    src = LatLonGrid(
+        lat_edges = collect(-90.0:30.0:90.0),
+        lon_edges = collect(0.0:45.0:360.0),
+        R = R
+    )
+    dst = LatLonGrid(
+        lat_edges = collect(-90.0:15.0:90.0),
+        lon_edges = collect(0.0:15.0:360.0),
+        R = R
+    )
+    w = conservative_weights(src, dst)
+
+    rowsums = vec(sum(w.W; dims = 2))
+    colsums = vec(sum(w.W; dims = 1))
+    @test rowsums ≈ [cell_volume(dst, d) for d in 1:num_cells(dst)] rtol = 1e-8
+    @test colsums ≈ [cell_volume(src, s) for s in 1:num_cells(src)] rtol = 1e-8
+    @test sum(rowsums) ≈ 4π * R^2 rtol = 1e-8
+end
+
 @testset "radius mismatch" begin
     g = coarse_grid()
     g2 = LatLonGrid(
