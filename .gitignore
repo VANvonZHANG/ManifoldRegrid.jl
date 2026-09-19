@@ -1,0 +1,11 @@
+# Julia package local state
+Manifest.toml
+*.cov
+*.jl.cov
+*.jl.*.cov
+coverage/
+lcov.info
+
+# Local agent planning artifacts
+docs/superpowers/
+.superpowers/
