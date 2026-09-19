@@ -12,6 +12,10 @@ meshes covering the same sphere.
 - `src`, `dest`: the meshes the weights were built from.
 - `dst_areas`: `cell_volume(dest, d)` cache used for row normalization.
 
+Construct via `conservative_weights`. The bare 4-field constructor performs no
+validation, so it will happily build a `ConservativeWeights` that violates the
+invariants below; `conservative_weights` is what checks them.
+
 `W` always holds raw overlap areas so its invariants stay checkable: row sums
 equal destination cell areas, column sums equal source cell areas. `remap`
 applies the `1 / A_dest` normalization at application time.
@@ -25,8 +29,9 @@ struct ConservativeWeights{W <: SparseMatrixCSC{Float64, Int},
 end
 
 # Angular radius of the smallest cap around the cell centroid containing the
-# cell. The candidate search only needs the bound to be conservative — it may
-# overestimate, never underestimate.
+# cell — the max over its vertices, which bounds the cell for convex cells
+# lying within a hemisphere of the centroid (true for every shipped grid type;
+# a violation surfaces as a conservation failure, not silently).
 function _cell_circumradius(g::AbstractManifoldMesh, cell_id::Int)
     c = normalize(SVector{3, Float64}(cell_centroid(g, cell_id)))
     r = 0.0
@@ -80,9 +85,12 @@ function conservative_weights(src::AbstractManifoldMesh, dest::AbstractManifoldM
 
     src_centroids = all_cell_centroids(src)
     dst_centroids = all_cell_centroids(dest)
-    # all_cell_centroids returns UNIT vectors regardless of R (node coordinates
-    # are at radius R, centroids are not) — normalize so the tree and the query
-    # point live on the unit sphere and the radius is an angular chord.
+    # Centroid scale depends on the grid type: the parametric grids return UNIT
+    # vectors regardless of R, but `UnstructuredMesh` stores `R * P(cunit)` and
+    # so returns R-scaled centroids. The `normalize` calls below are therefore
+    # LOAD-BEARING, not cosmetic — they put the tree and the query point on the
+    # unit sphere so the search radius is an angular chord. Deleting them breaks
+    # remapping for `UnstructuredMesh` at R != 1.
     src_centroids = [normalize(SVector{3, Float64}(c)) for c in src_centroids]
     dst_centroids = [normalize(SVector{3, Float64}(c)) for c in dst_centroids]
     max_r_src = maximum(_cell_circumradius(src, c) for c in 1:nc_src)
