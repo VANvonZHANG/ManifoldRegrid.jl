@@ -46,6 +46,8 @@ end
     outt = remap(Conservative(), ft, dst)
 
     @test size(data(outt)) == (num_cells(dst), 3)
+    @test DimensionalData.dims(outt)[1] == DimensionalData.Dim{:cell}(1:num_cells(dst))
+    @test DimensionalData.dims(outt)[2] == DimensionalData.Dim{:time}(1:3)
     for t in 1:3
         col = DiscreteField(CellLoc, src, values[:, t], (Dim{:cell}(1:n),); name = :x)
         @test data(outt)[:, t] ≈ data(remap(Conservative(), col, dst))
@@ -88,4 +90,23 @@ end
 
     @test_throws MethodError remap(Conservative(), node_field, dst)
     @test_throws MethodError remap(Bilinear(), cell_field, dst)
+end
+
+@testset "row normalization uses the exact destination area" begin
+    src = coarse_grid()
+    dst = fine_grid()
+    w = conservative_weights(src, dst)
+    n = num_cells(src)
+    m = num_cells(dst)
+    f = DiscreteField(CellLoc, src, collect(1.0:n), (Dim{:cell}(1:n),); name = :x)
+
+    # Hand-build weights whose row sums deliberately disagree with the cached
+    # destination areas, so `1/A_dest` and `1/rowsum` give different answers.
+    # On the real fixtures the two agree to ~3.5e-15, which is why the integral
+    # test cannot tell them apart — this is the assertion that can.
+    perturbed = ConservativeWeights(w.W, w.src, w.dest,
+        w.dst_areas .* (1 .+ 1e-3 .* [isodd(d) ? 1.0 : -1.0 for d in 1:m]))
+
+    expected = (w.W * data(f)) ./ perturbed.dst_areas
+    @test data(remap(perturbed, f)) ≈ expected rtol = 1e-15
 end

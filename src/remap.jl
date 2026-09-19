@@ -37,6 +37,14 @@ area-weighted mean of the source values overlapping it,
 Dividing by the exact destination cell area rather than by the row sum of `W`
 keeps the global integral conserved to machine precision even when the overlap
 areas carry rounding error: geometric error degrades local accuracy only.
+
+The field must be defined on the *same mesh object* the weights were built
+from (`mesh(f) === w.src`); an independently reconstructed but geometrically
+identical mesh is rejected — rebuild the weights alongside it.
+
+The result is always cell-major: the location axis comes first and trailing
+axes keep their relative order, so a `(time, cell)` field comes back
+`(cell, time)`.
 """
 function remap(w::ConservativeWeights, f::DiscreteField{CellLoc})
     mesh(f) === w.src || throw(ArgumentError(
