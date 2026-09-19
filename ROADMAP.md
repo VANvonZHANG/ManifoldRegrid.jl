@@ -3,6 +3,27 @@
 `ManifoldRegrid.jl` is a private/development package. Registration is deferred
 until the weights API stabilizes.
 
+## Release prerequisites
+
+Tag the siblings **first**, in this order:
+
+1. `ManifoldMeshes` **0.8.0** — `polygon.jl` (clipping, `cell_ring`, area) and
+   the id-order batch accessors.
+2. `ManifoldFields` **0.1.1** — `location_axis` and `interpolate(f, dest_mesh)`.
+3. `ManifoldRegrid` **0.1.0** — last, and only once the two above are tagged.
+
+`ManifoldRegrid` is not consumable until both siblings are released: its
+`[compat]` requires `ManifoldMeshes 0.8` (0.7.x has no `cell_ring`, so an
+install-and-load against 0.7 dies with `UndefVarError: cell_ring not defined`)
+and it calls `ManifoldFields.location_axis`. Until then, `Pkg.develop` on the
+sibling paths (or a `rev`-pinned clone) is required.
+
+Accordingly, `.github/workflows/CI.yml`'s "Develop sibling packages" step
+tracks each sibling's **default-branch HEAD**, so it cannot go green from this
+branch alone: both sibling branches must be pushed and merged first. Once they
+are, pin the step to a `rev` (a tag or commit SHA) so CI is reproducible and
+does not silently pick up sibling changes.
+
 ## Delivered (2026-09)
 
 - First-order (piecewise-constant) conservative remapping:
